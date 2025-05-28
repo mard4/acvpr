@@ -1,0 +1,96 @@
+# ---
+# jupyter:
+#   jupytext:
+#     text_representation:
+#       extension: .sh
+#       format_name: percent
+#       format_version: '1.3'
+#       jupytext_version: 1.17.1
+#   kernelspec:
+#     display_name: Bash
+#     language: bash
+#     name: bash
+# ---
+
+# %%
+# Experiment setup
+TRAIN_FOLD="train"
+TEST_FOLD="test" 
+EXP_PREFIX="metric"
+TASK="PHASES"
+ARCH="TCM"
+
+# TCM
+S_HEADS=4
+S_LAYERS=2
+S_CAT_DIM=768
+S_D_MODEL=768
+S_INPUT_DIM=3072
+
+CHUNK_SIZE=70
+OVERLAPPING=60
+
+OPT="adam"
+LR=0.00001
+
+DATASET="cholec80"
+
+EXPERIMENT_NAME="$ARCH-chunks_$CHUNK_SIZE-overlap_$OVERLAPPING-dmodel_$S_D_MODEL-catdim_$S_CAT_DIM-layers_$S_LAYERS-heads_$S_HEADS-opt_$OPT-lr_$LR"
+CONFIG_PATH="configs/"$DATASET"/"$ARCH"_"$TASK".yaml"
+FRAME_DIR="./data/"$DATASET"/frames"
+OUTPUT_DIR="outputs/$DATASET/"$TRAIN_FOLD"/"$TASK"/"$EXPERIMENT_NAME
+FRAME_LIST="./data/"$DATASET"/frame_lists"
+ANNOT_DIR="./data/"$DATASET"/annotations/"$TRAIN_FOLD
+COCO_ANN_PATH="./data/"$DATASET"/annotations/"$TRAIN_FOLD"/"$TEST_FOLD"_long-term_anns.json"  
+
+TT_TRAIN="./data/"$DATASET"/frames_features/$TRAIN_FOLD"
+TT_VAL="./data/"$DATASET"/frames_features/$TEST_FOLD"
+
+CHECKPOINT="./model_weights/temporal_consistency_module/"$DATASET"/train/checkpoint_best_phases.pyth"
+
+TYPE="pytorch"
+
+export PYTHONPATH="./must:$PYTHONPATH"
+
+#-------------------------
+# Run experiment
+
+mkdir -p $OUTPUT_DIR
+
+CUDA_VISIBLE_DEVICES=0 python -B tools/run_net.py \
+--cfg $CONFIG_PATH \
+NUM_GPUS 1 \
+CHUNKS.CHUNK_SIZE $CHUNK_SIZE \
+CHUNKS.OVERLAPPING $OVERLAPPING \
+TRAIN.DATASET "cholec80chunks" \
+TEST.DATASET "cholec80chunks" \
+TRAIN.CHECKPOINT_FILE_PATH $CHECKPOINT \
+TRAIN.CHECKPOINT_EPOCH_RESET True \
+TRAIN.CHECKPOINT_TYPE $TYPE \
+TEST.ENABLE True \
+TRAIN.ENABLE False \
+TEMPORAL_MODULE.FEATURE_PATH_TRAIN $TT_TRAIN \
+TEMPORAL_MODULE.FEATURE_PATH_VAL $TT_VAL \
+TEMPORAL_MODULE.ONLINE_INFERENCE True \
+TEMPORAL_MODULE.TCM_D_MODEL $S_D_MODEL \
+TEMPORAL_MODULE.TCM_CAT_DIM $S_CAT_DIM \
+TEMPORAL_MODULE.TCM_NUM_LAYERS $S_LAYERS \
+TEMPORAL_MODULE.TCM_NUM_HEADS $S_HEADS \
+TEMPORAL_MODULE.TCM_INPUT_DIM $S_INPUT_DIM \
+ENDOVIS_DATASET.FRAME_DIR $FRAME_DIR \
+ENDOVIS_DATASET.FRAME_LIST_DIR $FRAME_LIST \
+ENDOVIS_DATASET.TRAIN_LISTS $TRAIN_FOLD".csv" \
+ENDOVIS_DATASET.TEST_LISTS $TEST_FOLD".csv" \
+ENDOVIS_DATASET.ANNOTATION_DIR $ANNOT_DIR \
+ENDOVIS_DATASET.TEST_COCO_ANNS $COCO_ANN_PATH \
+ENDOVIS_DATASET.TRAIN_GT_BOX_JSON "train_long-term_anns.json" \
+ENDOVIS_DATASET.TEST_GT_BOX_JSON $TEST_FOLD"_long-term_anns.json" \
+TRAIN.BATCH_SIZE 256 \
+TEST.BATCH_SIZE 256 \
+SOLVER.BASE_LR $LR \
+SOLVER.COSINE_END_LR 1e-5 \
+SOLVER.WARMUP_START_LR 0.0000125 \
+SOLVER.OPTIMIZING_METHOD $OPT \
+SOLVER.WARMUP_EPOCHS 2.0 \
+SOLVER.MAX_EPOCH 30 \
+OUTPUT_DIR $OUTPUT_DIR \
