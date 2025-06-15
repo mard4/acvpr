@@ -13,6 +13,13 @@ import pickle
 class FeatureExtraction(LightningModule):
     def __init__(self, hparams, model, dataset):
         super(FeatureExtraction, self).__init__()
+        #added code :
+        self.current_stems = []
+        self.current_phase_labels = []
+        self.current_p_phases = []
+        self.current_tool_labels = [] 
+        self.len_test_data = len(self.dataset.data["test"])
+        ##
         self.hparams = hparams
         self.batch_size = hparams.batch_size
         self.dataset = dataset
@@ -115,14 +122,35 @@ class FeatureExtraction(LightningModule):
         )
         return cm.Overall_ACC, cm.PPV, cm.TPR, cm.classes, cm.F1_Macro
 
+    # def save_to_drive(self, vid_index):
+    #     acc, ppv, tpr, keys, f1 = self.get_phase_acc(self.current_phase_labels,
+    #                                                  self.current_p_phases)
+    #     save_path = self.pickle_path / f"{self.hparams.fps_sampling_test}fps"
+    #     save_path.mkdir(exist_ok=True)
+    #     save_path_txt = save_path / f"video_{vid_index}_{self.hparams.fps_sampling_test}fps_acc.txt"
+    #     save_path_vid = save_path / f"video_{vid_index}_{self.hparams.fps_sampling_test}fps.pkl"
+
+    #     with open(save_path_txt, "w") as f:
+    #         f.write(
+    #             f"vid: {vid_index}; acc: {acc}; ppv: {ppv}; tpr: {tpr}; keys: {keys}; f1: {f1}"
+    #         )
+    #         self.test_acc_per_video[vid_index] = acc
+    #         print(
+    #             f"save video {vid_index} | acc: {acc:.4f} | f1: {f1}"
+    #         )
+    #     with open(save_path_vid, 'wb') as f:
+    #         pickle.dump([
+    #             np.asarray(self.current_stems),
+    #             np.asarray(self.current_p_phases),
+    #             np.asarray(self.current_phase_labels)
+    #         ], f)
     def save_to_drive(self, vid_index):
         acc, ppv, tpr, keys, f1 = self.get_phase_acc(self.current_phase_labels,
-                                                     self.current_p_phases)
+                                                        self.current_p_phases)
         save_path = self.pickle_path / f"{self.hparams.fps_sampling_test}fps"
         save_path.mkdir(exist_ok=True)
         save_path_txt = save_path / f"video_{vid_index}_{self.hparams.fps_sampling_test}fps_acc.txt"
         save_path_vid = save_path / f"video_{vid_index}_{self.hparams.fps_sampling_test}fps.pkl"
-
         with open(save_path_txt, "w") as f:
             f.write(
                 f"vid: {vid_index}; acc: {acc}; ppv: {ppv}; tpr: {tpr}; keys: {keys}; f1: {f1}"
@@ -135,22 +163,63 @@ class FeatureExtraction(LightningModule):
             pickle.dump([
                 np.asarray(self.current_stems),
                 np.asarray(self.current_p_phases),
-                np.asarray(self.current_phase_labels)
+                np.asarray(self.current_phase_labels),
+                np.asarray(self.current_tool_labels) # Add this line
             ], f)
 
-    def test_step(self, batch, batch_idx):
+    # def test_step(self, batch, batch_idx):
 
+    #     x, y_phase, (vid_idx, img_name, img_index, tool_Grasper, tool_Bipolar,
+    #            tool_Hook, tool_Scissors, tool_Clipper, tool_Irrigator,
+    #            tool_SpecimenBag) = batch
+    #     vid_idx_raw = vid_idx.cpu().numpy()
+    #     with torch.no_grad():
+    #         stem, y_hat, _ = self.forward(x)
+    #     self.test_acc_phase(y_hat, y_phase)
+    #     #self.log("test_acc_phase", self.test_acc_phase, on_epoch=True, on_step=True)
+    #     vid_idxs, indexes = np.unique(vid_idx_raw, return_index=True)
+    #     vid_idxs = [int(x) for x in vid_idxs]
+    #     index_next = len(vid_idx) if len(vid_idxs) == 1 else indexes[1]
+    #     for i in range(len(vid_idxs)):
+    #         vid_idx = vid_idxs[i]
+    #         index = indexes[i]
+    #         if vid_idx != self.current_video_idx:
+    #             self.save_to_drive(self.current_video_idx)
+    #             self.current_stems = []
+    #             self.current_phase_labels = []
+    #             self.current_p_phases = []
+    #             if len(vid_idxs) <= i + 1:
+    #                 index_next = len(vid_idx_raw)
+    #             else:
+    #                 index_next = indexes[i+1]  # for the unlikely case that we have 3 phases in one batch
+    #             self.current_video_idx = vid_idx
+    #         y_hat_numpy = np.asarray(y_hat.cpu()).squeeze()
+    #         self.current_p_phases.extend(
+    #             np.asarray(y_hat_numpy[index:index_next, :]).tolist())
+    #         self.current_stems.extend(
+    #             stem[index:index_next, :].cpu().detach().numpy().tolist())
+    #         y_phase_numpy = y_phase.cpu().numpy()
+    #         self.current_phase_labels.extend(
+    #             np.asarray(y_phase_numpy[index:index_next]).tolist())
+
+    #     if (batch_idx + 1) * self.hparams.batch_size >= self.len_test_data:
+    #         self.save_to_drive(vid_idx)
+    #         print(f"Finished extracting all videos...")
+    def test_step(self, batch, batch_idx):
         x, y_phase, (vid_idx, img_name, img_index, tool_Grasper, tool_Bipolar,
-               tool_Hook, tool_Scissors, tool_Clipper, tool_Irrigator,
-               tool_SpecimenBag) = batch
+                tool_Hook, tool_Scissors, tool_Clipper, tool_Irrigator,
+                tool_SpecimenBag) = batch
         vid_idx_raw = vid_idx.cpu().numpy()
         with torch.no_grad():
             stem, y_hat, _ = self.forward(x)
-        self.test_acc_phase(y_hat, y_phase)
-        #self.log("test_acc_phase", self.test_acc_phase, on_epoch=True, on_step=True)
+        
+        acc_phase = self.test_acc_phase(y_hat, y_phase) 
+        self.log("test_acc_phase", acc_phase, on_epoch=True, on_step=False)
+
         vid_idxs, indexes = np.unique(vid_idx_raw, return_index=True)
         vid_idxs = [int(x) for x in vid_idxs]
         index_next = len(vid_idx) if len(vid_idxs) == 1 else indexes[1]
+        
         for i in range(len(vid_idxs)):
             vid_idx = vid_idxs[i]
             index = indexes[i]
@@ -159,11 +228,13 @@ class FeatureExtraction(LightningModule):
                 self.current_stems = []
                 self.current_phase_labels = []
                 self.current_p_phases = []
+                self.current_tool_labels = [] # Reset the new list
                 if len(vid_idxs) <= i + 1:
                     index_next = len(vid_idx_raw)
                 else:
-                    index_next = indexes[i+1]  # for the unlikely case that we have 3 phases in one batch
+                    index_next = indexes[i+1]
                 self.current_video_idx = vid_idx
+                
             y_hat_numpy = np.asarray(y_hat.cpu()).squeeze()
             self.current_p_phases.extend(
                 np.asarray(y_hat_numpy[index:index_next, :]).tolist())
@@ -172,6 +243,10 @@ class FeatureExtraction(LightningModule):
             y_phase_numpy = y_phase.cpu().numpy()
             self.current_phase_labels.extend(
                 np.asarray(y_phase_numpy[index:index_next]).tolist())
+            
+            # Add this part to collect tool labels
+            tool_labels = torch.stack([tool_Grasper, tool_Bipolar, tool_Hook, tool_Scissors, tool_Clipper, tool_Irrigator, tool_SpecimenBag], dim=1)
+            self.current_tool_labels.extend(tool_labels[index:index_next].cpu().numpy().tolist())
 
         if (batch_idx + 1) * self.hparams.batch_size >= self.len_test_data:
             self.save_to_drive(vid_idx)
