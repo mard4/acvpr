@@ -1,0 +1,49 @@
+The choosen batchsize is too large for this model. It got automatically reduced from: 1000 to 80
+split: val - shuffle: False
+split: train - shuffle: True                                                                                                             
+Epoch 0:  57%|██████████████████████████▉                    | 771/1347 [11:59<08:57,  1.07it/s, loss=0.081, v_num=i3v7, loss_step=0.167]
+/opt/miniconda3/envs/tecno_py38/lib/python3.8/site-packages/pytorch_lightning/utilities/distributed.py:45: UserWarning: Detected KeyboardInterrupt, attempting graceful shutdown...
+  warnings.warn(*args, **kwargs)
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/tecno_py38/lib/python3.8/site-packages/pytorch_lightning/trainer/trainer.py", line 494, in train
+    self.train_loop.run_training_epoch()
+  File "/opt/miniconda3/envs/tecno_py38/lib/python3.8/site-packages/pytorch_lightning/trainer/training_loop.py", line 561, in run_training_epoch
+    batch_output = self.run_training_batch(batch, batch_idx, dataloader_idx)
+  File "/opt/miniconda3/envs/tecno_py38/lib/python3.8/site-packages/pytorch_lightning/trainer/training_loop.py", line 739, in run_training_batch
+    batch_outputs = self._process_closure_result(
+  File "/opt/miniconda3/envs/tecno_py38/lib/python3.8/site-packages/pytorch_lightning/trainer/training_loop.py", line 787, in _process_closure_result
+    self.log_training_step_metrics(opt_closure_result, batch_callback_metrics, batch_log_metrics)
+  File "/opt/miniconda3/envs/tecno_py38/lib/python3.8/site-packages/pytorch_lightning/trainer/training_loop.py", line 520, in log_training_step_metrics
+    self.trainer.logger_connector.add_progress_bar_metrics(step_pbar_metrics)
+  File "/opt/miniconda3/envs/tecno_py38/lib/python3.8/site-packages/pytorch_lightning/trainer/connectors/logger_connector.py", line 119, in add_progress_bar_metrics
+    v = v.item()
+KeyboardInterrupt
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "train.py", line 157, in <module>
+    train(hparams, ModuleClass, ModelClass, DatasetClass, loggers)
+  File "train.py", line 94, in train
+    trainer.fit(module)
+  File "/opt/miniconda3/envs/tecno_py38/lib/python3.8/site-packages/pytorch_lightning/trainer/trainer.py", line 445, in fit
+    results = self.accelerator_backend.train()
+  File "/opt/miniconda3/envs/tecno_py38/lib/python3.8/site-packages/pytorch_lightning/accelerators/gpu_accelerator.py", line 64, in train
+    results = self.train_or_test()
+  File "/opt/miniconda3/envs/tecno_py38/lib/python3.8/site-packages/pytorch_lightning/accelerators/accelerator.py", line 66, in train_or_test
+    results = self.trainer.train()
+  File "/opt/miniconda3/envs/tecno_py38/lib/python3.8/site-packages/pytorch_lightning/trainer/trainer.py", line 533, in train
+    self.train_loop.on_train_end()
+  File "/opt/miniconda3/envs/tecno_py38/lib/python3.8/site-packages/pytorch_lightning/trainer/training_loop.py", line 190, in on_train_end
+    self.check_checkpoint_callback(should_save=True, is_last=True)
+  File "/opt/miniconda3/envs/tecno_py38/lib/python3.8/site-packages/pytorch_lightning/trainer/training_loop.py", line 220, in check_checkpoint_callback
+    [c.on_validation_end(self.trainer, model) for c in checkpoint_callbacks]
+  File "/opt/miniconda3/envs/tecno_py38/lib/python3.8/site-packages/pytorch_lightning/trainer/training_loop.py", line 220, in <listcomp>
+    [c.on_validation_end(self.trainer, model) for c in checkpoint_callbacks]
+  File "/opt/miniconda3/envs/tecno_py38/lib/python3.8/site-packages/pytorch_lightning/callbacks/model_checkpoint.py", line 186, in on_validation_end
+    self.save_checkpoint(trainer, pl_module)
+  File "/opt/miniconda3/envs/tecno_py38/lib/python3.8/site-packages/pytorch_lightning/callbacks/model_checkpoint.py", line 217, in save_checkpoint
+    self._validate_monitor_key(trainer)
+  File "/opt/miniconda3/envs/tecno_py38/lib/python3.8/site-packages/pytorch_lightning/callbacks/model_checkpoint.py", line 481, in _validate_monitor_key
+    raise MisconfigurationException(m)
+pytorch_lightning.utilities.exceptions.MisconfigurationException: ModelCheckpoint(monitor='val_acc_phase') not found in the returned metrics: ['loss_step', 'train_acc_phase_step', 'train_acc_phase', 'loss']. HINT: Did you call self.log('val_acc_phase', tensor) in the LightningModule?

@@ -1,0 +1,40 @@
+The choosen batchsize is too large for this model. It got automatically reduced from: 1000 to 80
+split: val - shuffle: False
+split: train - shuffle: True                                                                                                             
+Epoch 0: 100%|██████████████████████████████████████████████| 1347/1347 [16:34<00:00,  1.35it/s, loss=0.062, v_num=m67u, loss_step=0.137]
+Validating: 100%|██████████████████████████████████████████████████████████████████████████████████████| 268/268 [01:17<00:00,  3.68it/s]
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/tecno_py38/lib/python3.8/site-packages/pytorch_lightning/core/step_result.py", line 484, in reduce_on_epoch_end
+    reduced_val = weighted_mean(result[k], batch_sizes)
+  File "/opt/miniconda3/envs/tecno_py38/lib/python3.8/site-packages/pytorch_lightning/core/step_result.py", line 1022, in weighted_mean
+    result = torch.tensor(result)
+TypeError: object of type 'MultilabelFBetaScore' has no len()
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "train.py", line 136, in <module>
+    train(hparams, ModuleClass, ModelClass, DatasetClass, loggers)
+  File "train.py", line 73, in train
+    trainer.fit(module)
+  File "/opt/miniconda3/envs/tecno_py38/lib/python3.8/site-packages/pytorch_lightning/trainer/trainer.py", line 445, in fit
+    results = self.accelerator_backend.train()
+  File "/opt/miniconda3/envs/tecno_py38/lib/python3.8/site-packages/pytorch_lightning/accelerators/gpu_accelerator.py", line 64, in train
+    results = self.train_or_test()
+  File "/opt/miniconda3/envs/tecno_py38/lib/python3.8/site-packages/pytorch_lightning/accelerators/accelerator.py", line 66, in train_or_test
+    results = self.trainer.train()
+  File "/opt/miniconda3/envs/tecno_py38/lib/python3.8/site-packages/pytorch_lightning/trainer/trainer.py", line 494, in train
+    self.train_loop.run_training_epoch()
+  File "/opt/miniconda3/envs/tecno_py38/lib/python3.8/site-packages/pytorch_lightning/trainer/training_loop.py", line 589, in run_training_epoch
+    self.trainer.run_evaluation(test_mode=False)
+  File "/opt/miniconda3/envs/tecno_py38/lib/python3.8/site-packages/pytorch_lightning/trainer/trainer.py", line 610, in run_evaluation
+    eval_loop_results = self.evaluation_loop.log_epoch_metrics(deprecated_eval_results, epoch_logs, test_mode)
+  File "/opt/miniconda3/envs/tecno_py38/lib/python3.8/site-packages/pytorch_lightning/trainer/evaluation_loop.py", line 210, in log_epoch_metrics
+    eval_loop_results = self.trainer.logger_connector.on_evaluation_epoch_end(
+  File "/opt/miniconda3/envs/tecno_py38/lib/python3.8/site-packages/pytorch_lightning/trainer/connectors/logger_connector.py", line 127, in on_evaluation_epoch_end
+    self._log_on_evaluation_epoch_end_metrics(epoch_logs)
+  File "/opt/miniconda3/envs/tecno_py38/lib/python3.8/site-packages/pytorch_lightning/trainer/connectors/logger_connector.py", line 195, in _log_on_evaluation_epoch_end_metrics
+    reduced_epoch_metrics = dl_metrics[0].__class__.reduce_on_epoch_end(dl_metrics)
+  File "/opt/miniconda3/envs/tecno_py38/lib/python3.8/site-packages/pytorch_lightning/core/step_result.py", line 486, in reduce_on_epoch_end
+    reduced_val = torch.mean(result[k])
+TypeError: mean(): argument 'input' (position 1) must be Tensor, not list

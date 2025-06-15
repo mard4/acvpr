@@ -1,0 +1,96 @@
+{
+  "os": "Linux-5.15.0-140-generic-x86_64-with-glibc2.17",
+  "python": "CPython 3.8.20",
+  "startedAt": "2025-06-11T14:47:31.510809Z",
+  "args": [
+    "-c",
+    "modules/mstcn/config/config_tcn.yml"
+  ],
+  "program": "train.py",
+  "codePath": "train.py",
+  "git": {
+    "remote": "https://github.com/tobiascz/TeCNO.git",
+    "commit": "0c4313f3765348f5e42a8b7e9183639aea0bca4e"
+  },
+  "email": "g.derleres@student.utwente.nl",
+  "root": "/home/jovyan/Adv.CV/TeCNO_ver2/TeCNO",
+  "host": "59886eb6592c",
+  "executable": "/opt/miniconda3/envs/tecno_py38/bin/python",
+  "codePathLocal": "train.py",
+  "cpu_count": 72,
+  "cpu_count_logical": 144,
+  "gpu": "NVIDIA A16",
+  "gpu_count": 8,
+  "disk": {
+    "/": {
+      "total": "2360979238912",
+      "used": "552370913280"
+    }
+  },
+  "memory": {
+    "total": "269851811840"
+  },
+  "cpu": {
+    "count": 72,
+    "countLogical": 144
+  },
+  "gpu_nvidia": [
+    {
+      "name": "NVIDIA A16",
+      "memoryTotal": "16101933056",
+      "cudaCores": 1280,
+      "architecture": "Ampere",
+      "uuid": "GPU-dee2fe88-4979-eb3e-c9c0-39a01e4aa405"
+    },
+    {
+      "name": "NVIDIA A16",
+      "memoryTotal": "16101933056",
+      "cudaCores": 1280,
+      "architecture": "Ampere",
+      "uuid": "GPU-7108de3d-fef7-2ed0-709c-2981358e9d8f"
+    },
+    {
+      "name": "NVIDIA A16",
+      "memoryTotal": "16101933056",
+      "cudaCores": 1280,
+      "architecture": "Ampere",
+      "uuid": "GPU-30b5eb85-3766-6045-26ea-540fd653e446"
+    },
+    {
+      "name": "NVIDIA A16",
+      "memoryTotal": "16101933056",
+      "cudaCores": 1280,
+      "architecture": "Ampere",
+      "uuid": "GPU-3ff4833d-6cf0-46ea-6f2e-fd9aac0c982a"
+    },
+    {
+      "name": "NVIDIA A16",
+      "memoryTotal": "16101933056",
+      "cudaCores": 1280,
+      "architecture": "Ampere",
+      "uuid": "GPU-6035fd03-dfb1-a7d7-40ab-b965fddbf5ce"
+    },
+    {
+      "name": "NVIDIA A16",
+      "memoryTotal": "16101933056",
+      "cudaCores": 1280,
+      "architecture": "Ampere",
+      "uuid": "GPU-50d0f98f-a0b1-7519-5f38-30725c05416b"
+    },
+    {
+      "name": "NVIDIA A16",
+      "memoryTotal": "16101933056",
+      "cudaCores": 1280,
+      "architecture": "Ampere",
+      "uuid": "GPU-36d049ce-d199-9cbe-4f7e-8b4a4ec8a170"
+    },
+    {
+      "name": "NVIDIA A16",
+      "memoryTotal": "16101933056",
+      "cudaCores": 1280,
+      "architecture": "Ampere",
+      "uuid": "GPU-471fc098-c7b5-960d-0592-bec69c04602f"
+    }
+  ],
+  "cudaVersion": "12.5"
+}

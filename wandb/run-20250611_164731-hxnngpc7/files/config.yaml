@@ -1,0 +1,107 @@
+_wandb:
+    value:
+        cli_version: 0.20.1
+        m: []
+        python_version: 3.8.20
+        t:
+            "1":
+                - 1
+                - 9
+                - 51
+            "2":
+                - 1
+                - 9
+                - 51
+            "3":
+                - 13
+                - 55
+                - 61
+            "4": 3.8.20
+            "5": 0.20.1
+            "10":
+                - 20
+            "12": 0.20.1
+            "13": linux-x86_64
+accelerator:
+    value: ddp
+batch_size:
+    value: 1
+c:
+    value: modules/mstcn/config/config_tcn.yml
+check_val_every_n_epoch:
+    value: 1
+data_root:
+    value: /home/jovyan/Adv.CV/TeCNO_ver2/TeCNO/training_logs/250611-115931_FeatureExtraction_Cholec80FeatureExtract_cnn_TwoHeadResNet50Model/cholec80_pickle_export
+dataset:
+    value: cholec80.Cholec80
+early_stopping_metric:
+    value: val_acc
+factor_sampling:
+    value: 25
+fast_dev_run:
+    value: false
+features_per_seconds:
+    value: 1
+features_subsampling:
+    value: 1
+gpus:
+    value:
+        - 1
+input_height:
+    value: 224
+input_width:
+    value: 224
+learning_rate:
+    value: 7e-05
+log_every_n_steps:
+    value: 1
+log_interval:
+    value: 100
+log_save_interval:
+    value: 100
+max_epochs:
+    value: 16
+min_epochs:
+    value: 12
+model:
+    value: mstcn.MultiStageModel
+module:
+    value: mstcn.tecno.TeCNO
+mstcn_causal_conv:
+    value: true
+mstcn_f_dim:
+    value: 2048
+mstcn_f_maps:
+    value: 32
+mstcn_layers:
+    value: 8
+mstcn_stages:
+    value: 2
+name:
+    value: 250611-164729_TeCNO_Cholec80_mstcn_MultiStageModel
+num_sanity_val_steps:
+    value: 0
+num_workers:
+    value: 3
+on_polyaxon:
+    value: false
+optimizer_name:
+    value: adam
+out_features:
+    value: 7
+output_path:
+    value: /home/jovyan/Adv.CV/TeCNO_ver2/TeCNO/logs/250611-164729_TeCNO_Cholec80_mstcn_MultiStageModel
+overfit_pct:
+    value: 0
+resume_from_checkpoint:
+    value: None
+row_log_interval:
+    value: 100
+save_top_k:
+    value: 1
+test_percent_check:
+    value: 1
+train_percent_check:
+    value: 1
+val_percent_check:
+    value: 1

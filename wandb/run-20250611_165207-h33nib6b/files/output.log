@@ -1,0 +1,29 @@
+split: train - shuffle: True
+split: val - shuffle: False
+Epoch 39:  21%|███▊              | 10/48 [00:00<00:01, 23.69it/s, loss=1.648, v_num=ib6b, loss_step=1.65, val_loss=1.69, loss_epoch=1.64]
+Best: 0.3437902331352234 | monitor: val_acc | path: /home/jovyan/Adv.CV/TeCNO_ver2/TeCNO/logs/250611-165206_TeCNO_Cholec80_mstcn_MultiStageModel/checkpoints/250611-165206_TeCNO_Cholec80_mstcn_MultiStageModel-epoch=00-val_acc=0.34.ckpt
+Testing...
+/opt/miniconda3/envs/tecno_py38/lib/python3.8/site-packages/pytorch_lightning/utilities/cloud_io.py:32: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  return torch.load(f, map_location=map_location)
+split: test - shuffle: False
+Testing:  94%|█████████████████████████████████████████████████████████████████████████████████████▎     | 30/32 [00:00<00:00, 64.60it/s]--------------------------------------------------------------------------------
+DATALOADER:0 TEST RESULTS
+{'loss': tensor(1.6461, device='cuda:1'),
+ 'loss_epoch': tensor(1.6461, device='cuda:1'),
+ 'loss_step': tensor(1.6461, device='cuda:1'),
+ 'test_S1_acc': tensor(0.4985, device='cuda:1'),
+ 'test_acc': tensor(0.3341, device='cuda:1'),
+ 'test_avg_precision': tensor(0.3341, device='cuda:1'),
+ 'test_avg_recall': tensor(0.1429, device='cuda:1'),
+ 'train_S1_acc': tensor(0.8760, device='cuda:1'),
+ 'train_acc': tensor(0.0853, device='cuda:1'),
+ 'train_avg_precision': tensor(0.1253, device='cuda:1'),
+ 'train_avg_recall': tensor(0.1671, device='cuda:1'),
+ 'val: max acc last Stage': tensor(0.3438, device='cuda:1'),
+ 'val_S1_acc': tensor(0.7870, device='cuda:1'),
+ 'val_acc': tensor(0.0985, device='cuda:1'),
+ 'val_avg_precision': tensor(0.4346, device='cuda:1'),
+ 'val_avg_recall': tensor(0.2577, device='cuda:1'),
+ 'val_loss': tensor(1.8863, device='cuda:1')}
+--------------------------------------------------------------------------------
+Testing: 100%|███████████████████████████████████████████████████████████████████████████████████████████| 32/32 [00:00<00:00, 48.47it/s]

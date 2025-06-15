@@ -1,0 +1,54 @@
+{
+  "os": "Linux-5.15.0-140-generic-x86_64-with-glibc2.17",
+  "python": "CPython 3.8.20",
+  "startedAt": "2025-06-13T07:58:55.185934Z",
+  "args": [
+    "-c",
+    "modules/mstcn/config/config_tcn.yml"
+  ],
+  "program": "train.py",
+  "codePath": "train.py",
+  "git": {
+    "remote": "https://github.com/tobiascz/TeCNO.git",
+    "commit": "0c4313f3765348f5e42a8b7e9183639aea0bca4e"
+  },
+  "email": "g.derleres@student.utwente.nl",
+  "root": "/home/jovyan/Adv.CV/TeCNO_ver2/TeCNO",
+  "host": "1f0585ed4fd3",
+  "executable": "/opt/miniconda3/envs/tecno_py38/bin/python",
+  "codePathLocal": "train.py",
+  "cpu_count": 56,
+  "cpu_count_logical": 112,
+  "gpu": "NVIDIA A10",
+  "gpu_count": 2,
+  "disk": {
+    "/": {
+      "total": "2360979238912",
+      "used": "820935020544"
+    }
+  },
+  "memory": {
+    "total": "269860167680"
+  },
+  "cpu": {
+    "count": 56,
+    "countLogical": 112
+  },
+  "gpu_nvidia": [
+    {
+      "name": "NVIDIA A10",
+      "memoryTotal": "24146608128",
+      "cudaCores": 9216,
+      "architecture": "Ampere",
+      "uuid": "GPU-6590e8c0-1942-8870-be58-f0316cf02ca3"
+    },
+    {
+      "name": "NVIDIA A10",
+      "memoryTotal": "24146608128",
+      "cudaCores": 9216,
+      "architecture": "Ampere",
+      "uuid": "GPU-794b4bd4-f1b2-7029-10b3-47e67f13102d"
+    }
+  ],
+  "cudaVersion": "12.5"
+}
