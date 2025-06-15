@@ -11,7 +11,6 @@ def write_pkl(root_dir):
     annot_tool_path = root_dir / "tool_annotations"
     annot_timephase_path = root_dir / "videos"
     out_path = root_dir / "dataframes"
-    out_path.mkdir(parents=True, exist_ok=True) # <-- ADD THIS LINE
     #print(img_base_path, annot_tool_path, annot_timephase_path, out_path)
 
     class_labels = [
@@ -37,13 +36,13 @@ def write_pkl(root_dir):
         vid_df["image_path"] = img_list
         vid_df["video_idx"] = [i] * len(img_list)
         # add image class
-        #vid_time_and_phase = annot_timephase_path / f"video{i:02d}-timestamp.txt"
-        vid_time_and_phase = annot_timephase_path / f"video{i:02d}-phase.txt" #george
+        # vid_time_and_phase = annot_timephase_path / f"video{i:02d}-timestamp.txt"
+        vid_time_and_phase = annot_timephase_path / f"video{i:02d}-phase.txt" #fixed format 
         phases = pd.read_csv(vid_time_and_phase, sep='\t')
         for j, p in enumerate(class_labels):
             phases["Phase"] = phases.Phase.replace({p: j})
 
-        vid_tools = annot_tool_path / f"video{i:02d}-tool.txt"
+        vid_tools = annot_tool_path / f"video{i:02d}-tool.txt"        
         tools_short = pd.read_csv(vid_tools, sep='\t')
         tools_df = []
         for row in tools_short.itertuples(index=False):
@@ -81,9 +80,9 @@ def write_pkl(root_dir):
 #     pd.set_option('display.max_columns', None)
 #     root_dir = "/cholec80/cholec80splitted"
 #     write_pkl(root_dir)
-#george : 
+
 if __name__ == "__main__":
     pd.set_option('display.max_columns', None)
     # This MUST be the path to the main directory you created in Step 1
-    root_dir = "cholec80_processed"
+    root_dir = "Adv.CV/TeCNO_ver2/TeCNO/cholec80_processed"
     write_pkl(root_dir)
