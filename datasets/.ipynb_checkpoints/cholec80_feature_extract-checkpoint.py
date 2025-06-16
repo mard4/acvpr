@@ -21,8 +21,8 @@ class Cholec80FeatureExtract:
         self.input_width = hparams.input_width
         self.fps_sampling = hparams.fps_sampling
         self.fps_sampling_test = hparams.fps_sampling_test
-        self.cholec_root_dir = Path(self.hparams.data_root +
-                                    "/cholec80")  # videos splitted in images
+        self.cholec_root_dir = Path(self.hparams.data_root) #+
+                                   # "/cholec80")  # videos splitted in images
         self.transformations = self.__get_transformations()
         self.class_labels = [
             "Preparation",

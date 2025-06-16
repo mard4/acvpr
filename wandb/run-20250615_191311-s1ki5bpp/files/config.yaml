@@ -1,0 +1,108 @@
+_wandb:
+    value:
+        cli_version: 0.20.1
+        m: []
+        python_version: 3.8.20
+        t:
+            "1":
+                - 1
+                - 9
+                - 41
+                - 51
+                - 80
+            "2":
+                - 1
+                - 9
+                - 41
+                - 51
+                - 80
+            "3":
+                - 13
+                - 55
+            "4": 3.8.20
+            "5": 0.20.1
+            "10":
+                - 20
+            "12": 0.20.1
+            "13": linux-x86_64
+accelerator:
+    value: ddp
+batch_size:
+    value: 1000
+c:
+    value: modules/cnn/config/config_feature_extract.yml
+check_val_every_n_epoch:
+    value: 1
+data_root:
+    value: /home/jovyan/Adv.CV/TeCNO_ver2/TeCNO/cholec80_processed
+dataset:
+    value: cholec80_feature_extract.Cholec80FeatureExtract
+dataset_mode:
+    value: img_multilabel
+early_stopping_metric:
+    value: val_acc_phase
+fast_dev_run:
+    value: false
+fps_sampling:
+    value: 25
+fps_sampling_test:
+    value: 25
+gpus:
+    value:
+        - 1
+input_height:
+    value: 224
+input_width:
+    value: 224
+learning_rate:
+    value: 0.0005
+log_every_n_steps:
+    value: 50
+log_interval:
+    value: 100
+log_save_interval:
+    value: 100
+max_epochs:
+    value: 15
+min_epochs:
+    value: 6
+model:
+    value: cnn.TwoHeadResNet50Model
+model_specific_batch_size_max:
+    value: 80
+module:
+    value: cnn.feature_extraction.FeatureExtraction
+name:
+    value: 250615-191301_FeatureExtraction_Cholec80FeatureExtract_cnn_TwoHeadResNet50Model
+num_sanity_val_steps:
+    value: 4
+num_tasks:
+    value: 2
+num_workers:
+    value: 20
+on_polyaxon:
+    value: false
+optimizer_name:
+    value: adam
+out_features:
+    value: 7
+output_path:
+    value: /home/jovyan/Adv.CV/TeCNO_ver2/TeCNO/logs/250615-191301_FeatureExtraction_Cholec80FeatureExtract_cnn_TwoHeadResNet50Model
+overfit_pct:
+    value: 0
+pretrained:
+    value: true
+resume_from_checkpoint:
+    value: None
+row_log_interval:
+    value: 100
+save_top_k:
+    value: 1
+test_extract:
+    value: true
+test_percent_check:
+    value: 1
+train_percent_check:
+    value: 1
+val_percent_check:
+    value: 1

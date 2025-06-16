@@ -18,5 +18,5 @@ mstcn_stages : 2
 early_stopping_metric : val_acc
 save_top_k : 1
 gpus : ['1']
-data_root : Adv.CV/TeCNO_ver2/TeCNO/cholec80_processed/dataframes
+data_root : /home/jovyan/Adv.CV/TeCNO_ver2/TeCNO/cholec80_processed/dataframes
 num_sanity_val_steps: 0

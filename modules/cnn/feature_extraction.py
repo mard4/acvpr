@@ -8,18 +8,13 @@ from torch import nn
 from pycm import ConfusionMatrix
 import numpy as np
 import pickle
+from torchmetrics.classification import MultilabelFBetaScore
 
 
 class FeatureExtraction(LightningModule):
     def __init__(self, hparams, model, dataset):
         super(FeatureExtraction, self).__init__()
-        #added code :
-        self.current_stems = []
-        self.current_phase_labels = []
-        self.current_p_phases = []
-        self.current_tool_labels = [] 
-        self.len_test_data = len(self.dataset.data["test"])
-        ##
+       
         self.hparams = hparams
         self.batch_size = hparams.batch_size
         self.dataset = dataset
@@ -30,12 +25,18 @@ class FeatureExtraction(LightningModule):
         self.sig_f = nn.Sigmoid()
         self.current_video_idx = self.dataset.df["test"].video_idx.min()
         self.init_metrics()
-
-        # store model
+        #added code :
         self.current_stems = []
         self.current_phase_labels = []
         self.current_p_phases = []
+        self.current_tool_labels = [] 
         self.len_test_data = len(self.dataset.data["test"])
+        #end #
+        # store model
+        # self.current_stems = []
+        # self.current_phase_labels = []
+        # self.current_p_phases = []
+        # self.len_test_data = len(self.dataset.data["test"])
         self.model = model
         self.best_metrics_high = {"val_acc_phase": 0}
         self.test_acc_per_video = {}
@@ -48,8 +49,10 @@ class FeatureExtraction(LightningModule):
         if self.num_tasks == 2:
             self.train_acc_tool = pl.metrics.Accuracy()
             self.val_acc_tool = pl.metrics.Accuracy()
-            self.val_f1_tool = pl.metrics.Fbeta(num_classes=7, multilabel=True)
-            self.train_f1_tool = pl.metrics.Fbeta(num_classes=7, multilabel=True)
+            # self.val_f1_tool = pl.metrics.Fbeta(num_classes=7, multilabel=True)
+            # self.train_f1_tool = pl.metrics.Fbeta(num_classes=7, multilabel=True)
+            self.val_f1_tool = MultilabelFBetaScore(num_labels=7, beta=1.0, average='macro')
+            self.train_f1_tool = MultilabelFBetaScore(num_labels=7, beta=1.0, average='macro')
 
     def set_export_pickle_path(self):
         self.pickle_path = self.hparams.output_path / "cholec80_pickle_export"
@@ -81,47 +84,100 @@ class FeatureExtraction(LightningModule):
 
 
 
+#     def training_step(self, batch, batch_idx):
+#         x, y_phase, y_tool = batch
+#         _, p_phase, p_tool = self.forward(x)
+#         loss = self.loss_phase_tool(p_phase, p_tool, y_phase, y_tool, self.num_tasks)
+#         # acc_phase, acc_tool, loss
+#         if self.num_tasks == 2:
+#             self.train_acc_tool(p_tool, torch.stack(y_tool, dim=1))
+#             self.log("train_acc_tool", self.train_acc_tool, on_epoch=True, on_step=False)
+#             self.train_f1_tool(p_tool, torch.stack(y_tool, dim=1))
+#             self.log("train_f1_tool", self.train_f1_tool, on_epoch=True, on_step=False)
+#         self.train_acc_phase(p_phase, y_phase)
+#         self.log("train_acc_phase", self.train_acc_phase, on_epoch=True, on_step=True)
+#         self.log("loss", loss, prog_bar=True, logger=True, on_epoch=True, on_step=True)
+#         return loss
+
+
+
+#     def validation_step(self, batch, batch_idx):
+#         x, y_phase, y_tool = batch
+#         _, p_phase, p_tool = self.forward(x)
+#         loss = self.loss_phase_tool(p_phase, p_tool, y_phase, y_tool, self.num_tasks)
+#         # acc_phase, acc_tool, loss
+#         if self.num_tasks == 2:
+#             self.val_acc_tool(p_tool, torch.stack(y_tool, dim=1))
+#             self.log("val_acc_tool", self.val_acc_tool, on_epoch=True, on_step=False)
+#             self.val_f1_tool(p_tool, torch.stack(y_tool, dim=1))
+#             self.log("val_f1_tool", self.val_f1_tool, on_epoch=True, on_step=False)
+#         self.val_acc_phase(p_phase, y_phase)
+#         self.log("val_acc_phase", self.val_acc_phase, on_epoch=True, on_step=False)
+#         self.log("val_loss", loss, prog_bar=True, logger=True, on_epoch=True, on_step=False)
+    # In modules/cnn/feature_extraction.py
+
     def training_step(self, batch, batch_idx):
         x, y_phase, y_tool = batch
         _, p_phase, p_tool = self.forward(x)
         loss = self.loss_phase_tool(p_phase, p_tool, y_phase, y_tool, self.num_tasks)
-        # acc_phase, acc_tool, loss
+        #self.log("loss", loss, prog_bar=True, logger=True)
+        self.log("loss", loss, logger=True)
+        # --- Phase Accuracy ---
+        # Manually calculate and log step accuracy for the progress bar
+        step_acc_phase = (torch.argmax(p_phase, -1) == y_phase).float().mean()
+        self.log("train_acc_phase_step", step_acc_phase, on_step=True, on_epoch=False, prog_bar=True, logger=True)
+
+        # Update the epoch-level accuracy metric (will be computed automatically at epoch end)
+        self.train_acc_phase.update(p_phase, y_phase)
+        self.log("train_acc_phase", self.train_acc_phase, on_step=False, on_epoch=True)
+
+        # --- Tool Metrics ---
         if self.num_tasks == 2:
-            self.train_acc_tool(p_tool, torch.stack(y_tool, dim=1))
-            self.log("train_acc_tool", self.train_acc_tool, on_epoch=True, on_step=False)
-            self.train_f1_tool(p_tool, torch.stack(y_tool, dim=1))
-            self.log("train_f1_tool", self.train_f1_tool, on_epoch=True, on_step=False)
-        self.train_acc_phase(p_phase, y_phase)
-        self.log("train_acc_phase", self.train_acc_phase, on_epoch=True, on_step=True)
-        self.log("loss", loss, prog_bar=True, logger=True, on_epoch=True, on_step=True)
+            tool_labels = torch.stack(y_tool, dim=1)
+
+            # Update epoch-level tool accuracy
+            self.train_acc_tool.update(p_tool, tool_labels)
+            self.log("train_acc_tool", self.train_acc_tool, on_step=False, on_epoch=True)
+
+            # Update F1 Score state (will be computed and logged at epoch end)
+            self.train_f1_tool.update(p_tool, tool_labels)
+
         return loss
-
-
 
     def validation_step(self, batch, batch_idx):
         x, y_phase, y_tool = batch
         _, p_phase, p_tool = self.forward(x)
         loss = self.loss_phase_tool(p_phase, p_tool, y_phase, y_tool, self.num_tasks)
-        # acc_phase, acc_tool, loss
+
         if self.num_tasks == 2:
-            self.val_acc_tool(p_tool, torch.stack(y_tool, dim=1))
+            tool_labels = torch.stack(y_tool, dim=1)
+            self.val_acc_tool.update(p_tool, tool_labels)
             self.log("val_acc_tool", self.val_acc_tool, on_epoch=True, on_step=False)
-            self.val_f1_tool(p_tool, torch.stack(y_tool, dim=1))
-            self.log("val_f1_tool", self.val_f1_tool, on_epoch=True, on_step=False)
-        self.val_acc_phase(p_phase, y_phase)
+            self.val_f1_tool.update(p_tool, tool_labels) # Update only
+
+        self.val_acc_phase.update(p_phase, y_phase)
         self.log("val_acc_phase", self.val_acc_phase, on_epoch=True, on_step=False)
         self.log("val_loss", loss, prog_bar=True, logger=True, on_epoch=True, on_step=False)
+        def get_phase_acc(self, true_label, pred):
+            pred = torch.FloatTensor(pred)
+            pred_phase = torch.softmax(pred, dim=1)
+            labels_pred = torch.argmax(pred_phase, dim=1).cpu().numpy()
+            cm = ConfusionMatrix(
+                actual_vector=true_label,
+                predict_vector=labels_pred,
+            )
+            return cm.Overall_ACC, cm.PPV, cm.TPR, cm.classes, cm.F1_Macro
+    
+    def training_epoch_end(self, outputs):
+        if self.num_tasks == 2:
+            # Compute and log the F1 score for the entire epoch
+            self.log('train_f1_tool', self.train_f1_tool.compute())
 
-    def get_phase_acc(self, true_label, pred):
-        pred = torch.FloatTensor(pred)
-        pred_phase = torch.softmax(pred, dim=1)
-        labels_pred = torch.argmax(pred_phase, dim=1).cpu().numpy()
-        cm = ConfusionMatrix(
-            actual_vector=true_label,
-            predict_vector=labels_pred,
-        )
-        return cm.Overall_ACC, cm.PPV, cm.TPR, cm.classes, cm.F1_Macro
-
+    def validation_epoch_end(self, outputs):
+        if self.num_tasks == 2:
+            # Compute and log the F1 score for the entire epoch
+            self.log('val_f1_tool', self.val_f1_tool.compute())
+    
     # def save_to_drive(self, vid_index):
     #     acc, ppv, tpr, keys, f1 = self.get_phase_acc(self.current_phase_labels,
     #                                                  self.current_p_phases)
@@ -144,6 +200,18 @@ class FeatureExtraction(LightningModule):
     #             np.asarray(self.current_p_phases),
     #             np.asarray(self.current_phase_labels)
     #         ], f)
+   
+
+    def get_phase_acc(self, true_label, pred):
+        pred = torch.FloatTensor(pred)
+        pred_phase = torch.softmax(pred, dim=1)
+        labels_pred = torch.argmax(pred_phase, dim=1).cpu().numpy()
+        cm = ConfusionMatrix(
+            actual_vector=np.asarray(true_label),
+            predict_vector=labels_pred,
+        )
+        return cm.Overall_ACC, cm.PPV, cm.TPR, cm.classes, cm.F1_Macro
+    
     def save_to_drive(self, vid_index):
         acc, ppv, tpr, keys, f1 = self.get_phase_acc(self.current_phase_labels,
                                                         self.current_p_phases)
