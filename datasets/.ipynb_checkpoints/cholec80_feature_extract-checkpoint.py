@@ -60,7 +60,7 @@ class Cholec80FeatureExtract:
         self.vids_for_training = [i for i in range(1, 41)]
         self.vids_for_val = [i for i in range(41, 49)]
         self.vids_for_test = [i for i in range(49, 81)]
-
+        # self.vids_for_test = [36] 
         self.df["train"] = self.df["all"][self.df["all"]["video_idx"].isin(
             self.vids_for_training)]
         self.df["val"] = self.df["all"][self.df["all"]["video_idx"].isin(

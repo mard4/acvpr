@@ -4,7 +4,8 @@ from torch import optim
 from torch.utils.data.distributed import DistributedSampler
 from torch.utils.data import DataLoader
 from pytorch_lightning.metrics.utils import _input_format_classification
-from pytorch_lightning.core.lightning import LightningModule
+#from pytorch_lightning.core.lightning import LightningModule
+from pytorch_lightning import LightningModule #newer version only 
 from utils.metric_helper import AccuracyStages, RecallOverClasse, PrecisionOverClasses
 from torch import nn
 import numpy as np
@@ -12,9 +13,15 @@ import numpy as np
 
 class TeCNO(LightningModule):
     def __init__(self, hparams, model, dataset):
-        super(TeCNO, self).__init__()
-        self.hparams = hparams
-        self.batch_size = hparams.batch_size
+        # super(TeCNO, self).__init__()
+        # self.hparams = hparams
+        # self.batch_size = hparams.batch_size
+        super().__init__()
+        # This logs hparams and ignores saving the bulky model and dataset
+        self.save_hyperparameters(hparams, ignore=['model', 'dataset'])
+        self.batch_size = self.hparams.batch_size
+        #rest are the same...
+        
         self.dataset = dataset
         self.model = model
         self.weights_train = np.asarray(self.dataset.weights["train"])

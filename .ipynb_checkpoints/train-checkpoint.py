@@ -1,6 +1,6 @@
 import configargparse
 from pathlib import Path
-from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
+from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, ModelSummary
 import logging
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import TensorBoardLogger, WandbLogger
@@ -27,74 +27,64 @@ def train(hparams, ModuleClass, ModelClass, DatasetClass, logger):
     # ------------------------
     # 1 INIT LIGHTNING MODEL
     # ------------------------
-    # load model
+    # This part is correct
     model = ModelClass(hparams=hparams)
-    # load dataset
     dataset = DatasetClass(hparams=hparams)
-    # load module
     module = ModuleClass(hparams, model, dataset)
 
     # ------------------------
-    # 3 INIT TRAINER --> continues training
+    # 3 INIT TRAINER
     # ------------------------
-    # checkpoint_callback = ModelCheckpoint(
-    #     dirpath=f"{hparams.output_path}/checkpoints/",
-    #     save_top_k=hparams.save_top_k,
-    #     verbose=True,
-    #     monitor=hparams.early_stopping_metric,
-    #     mode='max',
-    #     prefix=hparams.name,
-    #     filename=f'{{epoch}}-{{{hparams.early_stopping_metric}:.2f}}'
-    # )
-    # Define the full path and filename pattern for the checkpoint
-    ckpt_filepath = f"{hparams.output_path}/checkpoints/{hparams.name}{{epoch}}-{{{hparams.early_stopping_metric}:.2f}}"
+    
+    # Using dirpath and filename is the modern way for ModelCheckpoint
     checkpoint_callback = ModelCheckpoint(
-        filepath=ckpt_filepath, # Use the combined filepath
+        dirpath=f"{hparams.output_path}/checkpoints/",
+        filename=f"{hparams.name}-{{epoch:02d}}-{{{hparams.early_stopping_metric}:.2f}}",
         save_top_k=hparams.save_top_k,
         verbose=True,
         monitor=hparams.early_stopping_metric,
         mode='max'
-        # The dirpath, prefix, and filename arguments are removed
-)
+    )
+    
     early_stop_callback = EarlyStopping(
         monitor=hparams.early_stopping_metric,
         min_delta=0.00,
         patience=3,
-        mode='max')
+        mode='max'
+    )
 
+    # Replaces the old `weights_summary` argument
+    summary_callback = ModelSummary(max_depth=1)
 
-    # trainer = Trainer(
-    #     gpus=hparams.gpus,
-    #     logger=logger,
-    #     fast_dev_run=hparams.fast_dev_run,
-    #     min_epochs=hparams.min_epochs,
-    #     max_epochs=hparams.max_epochs,
-    #     checkpoint_callback=checkpoint_callback,
-    #     resume_from_checkpoint=hparams.resume_from_checkpoint,
-    #     callbacks=[early_stop_callback],
-    #     weights_summary='full',
-    #     num_sanity_val_steps=hparams.num_sanity_val_steps,
-    #     log_every_n_steps=hparams.log_every_n_steps
-    # )
     trainer = Trainer(
-    gpus=hparams.gpus,
-    logger=logger,
-    # ... other args
-    # The checkpoint_callback argument is removed
-    resume_from_checkpoint=hparams.resume_from_checkpoint,
-    callbacks=[early_stop_callback, checkpoint_callback], # Add checkpoint_callback here
-    # ... other args
-)
+        accelerator="gpu",
+        devices=hparams.gpus,
+        strategy=hparams.accelerator,
+        logger=logger,
+        fast_dev_run=hparams.fast_dev_run,
+        max_epochs=hparams.max_epochs,
+        callbacks=[early_stop_callback, checkpoint_callback, summary_callback],
+        num_sanity_val_steps=hparams.num_sanity_val_steps,
+        log_every_n_steps=hparams.log_every_n_steps
+    )
+    
     # ------------------------
     # 4 START TRAINING
     # ------------------------
 
-    trainer.fit(module)
+    # The checkpoint path for resuming is now passed to .fit()
+    trainer.fit(module, ckpt_path=hparams.resume_from_checkpoint)
+
     print(
-        f"Best: {checkpoint_callback.best_model_score} | monitor: {checkpoint_callback.monitor} | path: {checkpoint_callback.best_model_path}"
-        f"\nTesting..."
+        f"Best model score: {checkpoint_callback.best_model_score:.4f} at {checkpoint_callback.best_model_path}"
     )
-    trainer.test(ckpt_path=checkpoint_callback.best_model_path)
+    
+    # ------------------------
+    # 5 START TESTING
+    # ------------------------
+    print("Testing with best model...")
+    # Using ckpt_path='best' automatically loads the best saved checkpoint
+    trainer.test(model=module, ckpt_path='best')
 
 
 

@@ -1,0 +1,1 @@
+python test.py -c modules/cnn/config/config_feature_extract.yml --ckpt_path /home/jovyan/Adv.CV/TeCNO_ver2/TeCNO/logs/250615-191533_FeatureExtraction_Cholec80FeatureExtract_cnn_TwoHeadResNet50Model/checkpoints/250615-191533_FeatureExtraction_Cholec80FeatureExtract_cnn_TwoHeadResNet50Modelepoch=4-val_acc_phase=0.83.ckpt

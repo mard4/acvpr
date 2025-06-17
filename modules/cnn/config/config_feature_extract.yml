@@ -18,7 +18,7 @@ min_epochs : 6 # 20
 num_tasks : 2
 num_sanity_val_steps : 4
 test_extract : True
-#accelerator: ddp_spawn
-num_workers : 20
-gpus : 1 # all available -1
+accelerator: ddp
+num_workers : 10
+gpus : [0, 1, 2, 3, 4, 5, 6, 7] # all available -1
 #resume_from_checkpoint : logs/201103-000243_FeatureExtraction_Cholec80FeatureExtract_cnn_TwoHeadResNet50Model/checkpoints/201103-000243_FeatureExtraction_Cholec80FeatureExtract_cnn_TwoHeadResNet50Model-epoch=10-val_acc_phase=0.83.ckpt

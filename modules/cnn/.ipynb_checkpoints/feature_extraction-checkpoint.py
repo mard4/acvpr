@@ -3,20 +3,30 @@ import torch
 from torch import optim
 from torch.utils.data import DataLoader
 import pytorch_lightning as pl
-from pytorch_lightning.core.lightning import LightningModule
+#from pytorch_lightning.core.lightning import LightningModule #older version (1.0.8)
+from pytorch_lightning import LightningModule #newer version has different file structure
 from torch import nn
 from pycm import ConfusionMatrix
 import numpy as np
 import pickle
 from torchmetrics.classification import MultilabelFBetaScore
+#new :
+from torchmetrics import Accuracy
+from torchmetrics.classification import MultilabelAccuracy
 
 
 class FeatureExtraction(LightningModule):
     def __init__(self, hparams, model, dataset):
-        super(FeatureExtraction, self).__init__()
+#         super(FeatureExtraction, self).__init__()
        
-        self.hparams = hparams
-        self.batch_size = hparams.batch_size
+#         self.hparams = hparams
+#         self.batch_size = hparams.batch_size
+        super().__init__()
+        # This logs hparams and ignores saving the bulky model and dataset
+        self.save_hyperparameters(hparams, ignore=['model', 'dataset'])
+        self.batch_size = self.hparams.batch_size
+        
+    # ... (the rest of the __init__ method stays the same)
         self.dataset = dataset
         self.num_tasks = self.hparams.num_tasks  # output stem 0, output phase 1 , output phase and tool 2
         self.log_vars = nn.Parameter(torch.zeros(2))
@@ -42,15 +52,26 @@ class FeatureExtraction(LightningModule):
         self.test_acc_per_video = {}
         self.pickle_path = None
 
+    # def init_metrics(self):
+    #     self.train_acc_phase = pl.metrics.Accuracy()
+    #     self.val_acc_phase = pl.metrics.Accuracy()
+    #     self.test_acc_phase = pl.metrics.Accuracy()
+    #     if self.num_tasks == 2:
+    #         self.train_acc_tool = pl.metrics.Accuracy()
+    #         self.val_acc_tool = pl.metrics.Accuracy()
+    #         # self.val_f1_tool = pl.metrics.Fbeta(num_classes=7, multilabel=True)
+    #         # self.train_f1_tool = pl.metrics.Fbeta(num_classes=7, multilabel=True)
+    #         self.val_f1_tool = MultilabelFBetaScore(num_labels=7, beta=1.0, average='macro')
+    #         self.train_f1_tool = MultilabelFBetaScore(num_labels=7, beta=1.0, average='macro')
     def init_metrics(self):
-        self.train_acc_phase = pl.metrics.Accuracy()
-        self.val_acc_phase = pl.metrics.Accuracy()
-        self.test_acc_phase = pl.metrics.Accuracy()
+        # Phase prediction is a multiclass task
+        self.train_acc_phase = Accuracy(task="multiclass", num_classes=self.hparams.out_features)
+        self.val_acc_phase = Accuracy(task="multiclass", num_classes=self.hparams.out_features)
+        self.test_acc_phase = Accuracy(task="multiclass", num_classes=self.hparams.out_features)
         if self.num_tasks == 2:
-            self.train_acc_tool = pl.metrics.Accuracy()
-            self.val_acc_tool = pl.metrics.Accuracy()
-            # self.val_f1_tool = pl.metrics.Fbeta(num_classes=7, multilabel=True)
-            # self.train_f1_tool = pl.metrics.Fbeta(num_classes=7, multilabel=True)
+            # Tool prediction is a multilabel task
+            self.train_acc_tool = MultilabelAccuracy(num_labels=self.hparams.out_features)
+            self.val_acc_tool = MultilabelAccuracy(num_labels=self.hparams.out_features)
             self.val_f1_tool = MultilabelFBetaScore(num_labels=7, beta=1.0, average='macro')
             self.train_f1_tool = MultilabelFBetaScore(num_labels=7, beta=1.0, average='macro')
 
@@ -168,16 +189,23 @@ class FeatureExtraction(LightningModule):
             )
             return cm.Overall_ACC, cm.PPV, cm.TPR, cm.classes, cm.F1_Macro
     
-    def training_epoch_end(self, outputs):
+#     def training_epoch_end(self, outputs):
+#         if self.num_tasks == 2:
+#             # Compute and log the F1 score for the entire epoch
+#             self.log('train_f1_tool', self.train_f1_tool.compute())
+
+#     def validation_epoch_end(self, outputs):
+#         if self.num_tasks == 2:
+#             # Compute and log the F1 score for the entire epoch
+#             self.log('val_f1_tool', self.val_f1_tool.compute())
+    def on_train_epoch_end(self):
         if self.num_tasks == 2:
-            # Compute and log the F1 score for the entire epoch
             self.log('train_f1_tool', self.train_f1_tool.compute())
 
-    def validation_epoch_end(self, outputs):
+    def on_validation_epoch_end(self):
         if self.num_tasks == 2:
-            # Compute and log the F1 score for the entire epoch
             self.log('val_f1_tool', self.val_f1_tool.compute())
-    
+
     # def save_to_drive(self, vid_index):
     #     acc, ppv, tpr, keys, f1 = self.get_phase_acc(self.current_phase_labels,
     #                                                  self.current_p_phases)
@@ -322,10 +350,18 @@ class FeatureExtraction(LightningModule):
 
 
 
-    def test_epoch_end(self, outputs):
-        self.log("test_acc_train", np.mean(np.asarray([self.test_acc_per_video[x]for x in
+    # def test_epoch_end(self, outputs):
+    #     self.log("test_acc_train", np.mean(np.asarray([self.test_acc_per_video[x]for x in
+    #                                                    self.dataset.vids_for_training])))
+    #     self.log("test_acc_val", np.mean(np.asarray([self.test_acc_per_video[x]for x in
+    #                                                  self.dataset.vids_for_val])))
+    #     self.log("test_acc_test", np.mean(np.asarray([self.test_acc_per_video[x] for x in
+    #                                                   self.dataset.vids_for_test])))
+    #     self.log("test_acc", float(self.test_acc_phase.compute()))
+    def on_test_epoch_end(self):
+        self.log("test_acc_train", np.mean(np.asarray([self.test_acc_per_video[x] for x in
                                                        self.dataset.vids_for_training])))
-        self.log("test_acc_val", np.mean(np.asarray([self.test_acc_per_video[x]for x in
+        self.log("test_acc_val", np.mean(np.asarray([self.test_acc_per_video[x] for x in
                                                      self.dataset.vids_for_val])))
         self.log("test_acc_test", np.mean(np.asarray([self.test_acc_per_video[x] for x in
                                                       self.dataset.vids_for_test])))
@@ -357,14 +393,17 @@ class FeatureExtraction(LightningModule):
         else:
             should_shuffle = True
         print(f"split: {split} - shuffle: {should_shuffle}")
+        # worker = self.hparams.num_workers
+        # if split == "test":
+        #     print(
+        #         "worker set to 0 due to test"
+        #     )  # otherwise for extraction the order in which data is loaded is not sorted e.g. 1,2,3,4, --> 1,5,3,2
+        #     worker = 0
         worker = self.hparams.num_workers
         if split == "test":
-            print(
-                "worker set to 0 due to test"
-            )  # otherwise for extraction the order in which data is loaded is not sorted e.g. 1,2,3,4, --> 1,5,3,2
-            worker = 0
+            print(f"Using {worker} workers for testing.")
 
-        loader = DataLoader(
+            loader = DataLoader(
             dataset=dataset,
             batch_size=self.hparams.batch_size,
             shuffle=should_shuffle,
