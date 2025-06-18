@@ -38,30 +38,31 @@ class MultiStageModel(nn.Module):
         out_classes = self.stage1(x)
         outputs_classes = out_classes.unsqueeze(0)
         for s in self.stages:
-            out_classes = s(F.softmax(out_classes, dim=1))
+            # out_classes = s(F.softmax(out_classes, dim=1))
+            out_classes = s(out_classes)
             outputs_classes = torch.cat(
                 (outputs_classes, out_classes.unsqueeze(0)), dim=0)
         return outputs_classes
 
-    @staticmethod
-    def add_model_specific_args(parser):  # pragma: no cover
-        mstcn_reg_model_specific_args = parser.add_argument_group(
-            title='mstcn reg specific args options')
-        mstcn_reg_model_specific_args.add_argument("--mstcn_stages",
-                                                   default=4,
-                                                   type=int)
-        mstcn_reg_model_specific_args.add_argument("--mstcn_layers",
-                                                   default=10,
-                                                   type=int)
-        mstcn_reg_model_specific_args.add_argument("--mstcn_f_maps",
-                                                   default=64,
-                                                   type=int)
-        mstcn_reg_model_specific_args.add_argument("--mstcn_f_dim",
-                                                   default=2048,
-                                                   type=int)
-        mstcn_reg_model_specific_args.add_argument("--mstcn_causal_conv",
-                                                   action='store_true')
-        return parser
+    # @staticmethod
+    # def add_model_specific_args(parser):  # pragma: no cover
+    #     mstcn_reg_model_specific_args = parser.add_argument_group(
+    #         title='mstcn reg specific args options')
+    #     mstcn_reg_model_specific_args.add_argument("--mstcn_stages",
+    #                                                default=4,
+    #                                                type=int)
+    #     mstcn_reg_model_specific_args.add_argument("--mstcn_layers",
+    #                                                default=10,
+    #                                                type=int)
+    #     mstcn_reg_model_specific_args.add_argument("--mstcn_f_maps",
+    #                                                default=64,
+    #                                                type=int)
+    #     mstcn_reg_model_specific_args.add_argument("--mstcn_f_dim",
+    #                                                default=2048,
+    #                                                type=int)
+    #     mstcn_reg_model_specific_args.add_argument("--mstcn_causal_conv",
+    #                                                action='store_true')
+    #     return parser
 
 
 class SingleStageModel(nn.Module):

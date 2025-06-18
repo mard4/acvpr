@@ -18,17 +18,31 @@ class Cholec80Helper(Dataset):
     def __len__(self):
         return self.number_vids
 
+    # def __getitem__(self, index):
+    #     vid_id = index
+    #     p = self.data_root / self.data_p[vid_id]
+    #     unpickled_x = pd.read_pickle(p)
+    #     stem = np.asarray(unpickled_x[0],
+    #                       dtype=np.float32)[::self.factor_sampling]
+    #     y_hat = np.asarray(unpickled_x[1],
+    #                        dtype=np.float32)[::self.factor_sampling]
+    #     y = np.asarray(unpickled_x[2])[::self.factor_sampling]
+    #     return stem, y_hat, y
+    
     def __getitem__(self, index):
         vid_id = index
         p = self.data_root / self.data_p[vid_id]
-        unpickled_x = pd.read_pickle(p)
-        stem = np.asarray(unpickled_x[0],
-                          dtype=np.float32)[::self.factor_sampling]
-        y_hat = np.asarray(unpickled_x[1],
-                           dtype=np.float32)[::self.factor_sampling]
-        y = np.asarray(unpickled_x[2])[::self.factor_sampling]
-        return stem, y_hat, y
 
+        # Unpack all four components from the new pickle file
+        features, p_phase, true_phases, true_tools = pickle.load(open(p, "rb"))
+
+        # Subsample the data
+        features = np.asarray(features, dtype=np.float32)[::self.factor_sampling]
+        true_phases = np.asarray(true_phases)[::self.factor_sampling]
+        true_tools = np.asarray(true_tools, dtype=np.int64)[::self.factor_sampling]
+
+        # Return the features, true phases, and new true tool labels
+        return features, true_phases, true_tools
 
 class Cholec80():
     def __init__(self, hparams):
@@ -84,15 +98,15 @@ class Cholec80():
             f"train size: {len(self.data['train'])} - val size: {len(self.data['val'])} - test size:"
             f" {len(self.data['test'])}")
 
-    @staticmethod
-    def add_dataset_specific_args(parser):  # pragma: no cover
-        cholec80_specific_args = parser.add_argument_group(
-            title='cholec80 dataset specific args options')
-        cholec80_specific_args.add_argument("--features_per_seconds",
-                                                  default=25,
-                                                  type=float)
-        cholec80_specific_args.add_argument("--features_subsampling",
-                                                  default=5,
-                                                  type=float)
+#     @staticmethod
+#     def add_dataset_specific_args(parser):  # pragma: no cover
+#         cholec80_specific_args = parser.add_argument_group(
+#             title='cholec80 dataset specific args options')
+#         cholec80_specific_args.add_argument("--features_per_seconds",
+#                                                   default=25,
+#                                                   type=float)
+#         cholec80_specific_args.add_argument("--features_subsampling",
+#                                                   default=5,
+#                                                   type=float)
 
-        return parser
+#         return parser

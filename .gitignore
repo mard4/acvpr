@@ -3,3 +3,5 @@ raw_cholec80_videos
 training_logs
 logs
 cholec80.zip
+wandb
+core.[0-9]*

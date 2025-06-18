@@ -302,51 +302,46 @@ class FeatureExtraction(LightningModule):
     #         self.save_to_drive(vid_idx)
     #         print(f"Finished extracting all videos...")
     def test_step(self, batch, batch_idx):
-        x, y_phase, (vid_idx, img_name, img_index, tool_Grasper, tool_Bipolar,
-                tool_Hook, tool_Scissors, tool_Clipper, tool_Irrigator,
-                tool_SpecimenBag) = batch
-        vid_idx_raw = vid_idx.cpu().numpy()
+        x, y_phase, tool_data = batch
+
+        # Unpack tool data
+        (vid_idx, img_name, img_index, tool_Grasper, tool_Bipolar,
+         tool_Hook, tool_Scissors, tool_Clipper, tool_Irrigator,
+         tool_SpecimenBag) = tool_data
+
+        # Get model predictions
         with torch.no_grad():
             stem, y_hat, _ = self.forward(x)
-        
-        acc_phase = self.test_acc_phase(y_hat, y_phase) 
-        self.log("test_acc_phase", acc_phase, on_epoch=True, on_step=False)
 
-        vid_idxs, indexes = np.unique(vid_idx_raw, return_index=True)
-        vid_idxs = [int(x) for x in vid_idxs]
-        index_next = len(vid_idx) if len(vid_idxs) == 1 else indexes[1]
-        
-        for i in range(len(vid_idxs)):
-            vid_idx = vid_idxs[i]
-            index = indexes[i]
-            if vid_idx != self.current_video_idx:
-                self.save_to_drive(self.current_video_idx)
+        # Stack tool labels into a single tensor
+        tool_labels = torch.stack([
+            tool_Grasper, tool_Bipolar, tool_Hook, tool_Scissors, 
+            tool_Clipper, tool_Irrigator, tool_SpecimenBag
+        ], dim=1)
+
+        # Process each item in the batch individually to handle video transitions robustly
+        for i in range(len(vid_idx)):
+            current_vid_idx = vid_idx[i].item()
+
+            # If we encounter a new video, save all the data from the previous one
+            if current_vid_idx != self.current_video_idx:
+                if self.current_p_phases:  # Ensure there's data to save
+                    self.save_to_drive(self.current_video_idx)
+
+                # Reset the lists for the new video
                 self.current_stems = []
                 self.current_phase_labels = []
                 self.current_p_phases = []
-                self.current_tool_labels = [] # Reset the new list
-                if len(vid_idxs) <= i + 1:
-                    index_next = len(vid_idx_raw)
-                else:
-                    index_next = indexes[i+1]
-                self.current_video_idx = vid_idx
-                
-            y_hat_numpy = np.asarray(y_hat.cpu()).squeeze()
-            self.current_p_phases.extend(
-                np.asarray(y_hat_numpy[index:index_next, :]).tolist())
-            self.current_stems.extend(
-                stem[index:index_next, :].cpu().detach().numpy().tolist())
-            y_phase_numpy = y_phase.cpu().numpy()
-            self.current_phase_labels.extend(
-                np.asarray(y_phase_numpy[index:index_next]).tolist())
-            
-            # Add this part to collect tool labels
-            tool_labels = torch.stack([tool_Grasper, tool_Bipolar, tool_Hook, tool_Scissors, tool_Clipper, tool_Irrigator, tool_SpecimenBag], dim=1)
-            self.current_tool_labels.extend(tool_labels[index:index_next].cpu().numpy().tolist())
+                self.current_tool_labels = []
+                self.current_video_idx = current_vid_idx
 
-        if (batch_idx + 1) * self.hparams.batch_size >= self.len_test_data:
-            self.save_to_drive(vid_idx)
-            print(f"Finished extracting all videos...")
+            # Append data for the current frame to the lists.
+            # This approach ensures shapes are correct.
+            self.current_stems.append(stem[i].cpu().numpy())
+            self.current_p_phases.append(y_hat[i].cpu().numpy())
+            self.current_phase_labels.append(y_phase[i].item())
+            self.current_tool_labels.append(tool_labels[i].cpu().numpy())
+
 
 
 
@@ -359,6 +354,9 @@ class FeatureExtraction(LightningModule):
     #                                                   self.dataset.vids_for_test])))
     #     self.log("test_acc", float(self.test_acc_phase.compute()))
     def on_test_epoch_end(self):
+        if self.current_p_phases:
+            self.save_to_drive(self.current_video_idx)
+        
         self.log("test_acc_train", np.mean(np.asarray([self.test_acc_per_video[x] for x in
                                                        self.dataset.vids_for_training])))
         self.log("test_acc_val", np.mean(np.asarray([self.test_acc_per_video[x] for x in

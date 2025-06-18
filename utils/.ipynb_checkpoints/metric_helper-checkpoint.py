@@ -9,7 +9,7 @@ from typing import Any, Callable, Optional, Union
 # from pytorch_lightning.metrics import Precision, Recall
 #new ones : 
 from torchmetrics import Metric, Precision, Recall
-from torchmetrics.utilities.data import _input_format_classification
+# from torchmetrics.utilities.data import _input_format_classification
 
 
 '''The two following measures are defined per phase: Recall is defined as the number of correct detections inside the 
@@ -24,46 +24,83 @@ but are revealed within precision and recall'''
 
 
 
+# class PrecisionOverClasses(Precision):
+#     def __init__(self, num_classes: int = 1, threshold: float = 0.5, average: str = 'micro', multilabel: bool = False,
+#             compute_on_step: bool = True, dist_sync_on_step: bool = False, process_group: Optional[Any] = None, ):
+#         super().__init__(num_classes=num_classes, threshold=threshold, average=average, multilabel=multilabel,
+#                          compute_on_step=compute_on_step, dist_sync_on_step=dist_sync_on_step, process_group=process_group)
+#     def compute(self):
+#         return self.true_positives.float() / self.predicted_positives
+
+# class RecallOverClasse(Recall):
+#     def __init__(self, num_classes: int = 1, threshold: float = 0.5, average: str = 'micro', multilabel: bool = False,
+#             compute_on_step: bool = True, dist_sync_on_step: bool = False, process_group: Optional[Any] = None, ):
+#         super().__init__(num_classes=num_classes, threshold=threshold, average=average, multilabel=multilabel,
+#                          compute_on_step=compute_on_step, dist_sync_on_step=dist_sync_on_step, process_group=process_group)
+#     def compute(self):
+#         return self.true_positives.float() / self.actual_positives
+# In utils/metric_helper.py
+
 class PrecisionOverClasses(Precision):
-    def __init__(self, num_classes: int = 1, threshold: float = 0.5, average: str = 'micro', multilabel: bool = False,
-            compute_on_step: bool = True, dist_sync_on_step: bool = False, process_group: Optional[Any] = None, ):
-        super().__init__(num_classes=num_classes, threshold=threshold, average=average, multilabel=multilabel,
-                         compute_on_step=compute_on_step, dist_sync_on_step=dist_sync_on_step, process_group=process_group)
+    def __init__(self, task: str, num_classes: int = None, threshold: float = 0.5, average: str = 'micro',
+                 compute_on_step: bool = True, dist_sync_on_step: bool = False, process_group: Optional[Any] = None):
+        super().__init__(task=task, num_classes=num_classes, threshold=threshold, average=average,
+                         compute_on_step=compute_on_step, dist_sync_on_step=dist_sync_on_step,
+                         process_group=process_group)
+
     def compute(self):
-        return self.true_positives.float() / self.predicted_positives
+        # This logic should still work, but handles division by zero
+        denom = self.predicted_positives
+        denom[denom == 0] = 1  # Avoid division by zero
+        return self.true_positives.float() / denom
 
 class RecallOverClasse(Recall):
-    def __init__(self, num_classes: int = 1, threshold: float = 0.5, average: str = 'micro', multilabel: bool = False,
-            compute_on_step: bool = True, dist_sync_on_step: bool = False, process_group: Optional[Any] = None, ):
-        super().__init__(num_classes=num_classes, threshold=threshold, average=average, multilabel=multilabel,
-                         compute_on_step=compute_on_step, dist_sync_on_step=dist_sync_on_step, process_group=process_group)
-    def compute(self):
-        return self.true_positives.float() / self.actual_positives
+    def __init__(self, task: str, num_classes: int = None, threshold: float = 0.5, average: str = 'micro',
+                 compute_on_step: bool = True, dist_sync_on_step: bool = False, process_group: Optional[Any] = None):
+        super().__init__(task=task, num_classes=num_classes, threshold=threshold, average=average,
+                         compute_on_step=compute_on_step, dist_sync_on_step=dist_sync_on_step,
+                         process_group=process_group)
 
+    def compute(self):
+        # This logic should still work, but handles division by zero
+        denom = self.actual_positives
+        denom[denom == 0] = 1  # Avoid division by zero
+        return self.true_positives.float() / denom
+# In utils/metric_helper.py
 
 class AccuracyStages(Metric):
-    def __init__(self, num_stages=1, dist_sync_on_step=False):
+    # Add num_classes to the constructor
+    def __init__(self, num_stages: int = 1, num_classes: int = 1, dist_sync_on_step=False):
         super().__init__(dist_sync_on_step=dist_sync_on_step)
-        self.add_state("total", default=torch.tensor(0), dist_reduce_fx="sum")
         self.num_stages = num_stages
+        self.num_classes = num_classes  # <-- Store num_classes as an attribute
+        self.add_state("total", default=torch.tensor(0), dist_reduce_fx="sum")
         for s in range(self.num_stages):
             self.add_state(f"S{s + 1}_correct", default=torch.tensor(0), dist_reduce_fx="sum")
 
     def update(self, preds: torch.Tensor, target: torch.Tensor):
-        self.total += target.numel()
+        # This logic now works because self.num_classes exists
+        target_flat = target.flatten()
+        self.total += target_flat.numel()
+
         for s in range(self.num_stages):
-            preds_stage, target = _input_format_classification(preds[s], target, threshold=0.5)
-            assert preds_stage.shape == target.shape
+            preds_s = preds[s]
+            # Reshape predictions to (batch_size * seq_len, num_classes)
+            preds_s_flat = preds_s.permute(0, 2, 1).reshape(-1, self.num_classes)
+            # Get the predicted class index
+            preds_s_indices = torch.argmax(preds_s_flat, dim=1)
 
             s_correct = getattr(self, f"S{s + 1}_correct")
-            s_correct += torch.sum(preds_stage == target)
+            s_correct += torch.sum(preds_s_indices == target_flat)
             setattr(self, f"S{s + 1}_correct", s_correct)
 
     def compute(self):
         acc_list = []
         for s in range(self.num_stages):
             s_correct = getattr(self, f"S{s + 1}_correct")
-            acc_list.append(s_correct.float() / self.total)
+            # Handle case where total is 0 to avoid division by zero
+            total = self.total if self.total > 0 else 1
+            acc_list.append(s_correct.float() / total)
         return acc_list
 
 
