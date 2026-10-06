@@ -9,7 +9,7 @@
 
 <br clear="right"/>
 
-| <a href="src/PosterACVPR.pdf" target="_blank"><b>Poster</b></a> | <a href="AdvCV.pdf" target="_blank"><b>Paper</b></a> |
+| <a href="src/PosterACVPR.pdf" target="_blank"><b>Poster</b></a> | <a href="src/AdvCV.pdf" target="_blank"><b>Paper</b></a> |
 | :---: | :---: |
 | [![](src/posterimg.png)](src/posterimg.png) | [![](src/paper.png)](src/paper.png) |
 
